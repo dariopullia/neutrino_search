@@ -1,0 +1,6 @@
+build/
+cmake/
+json/
+list/
+submodules/
+*/__pycache__/
