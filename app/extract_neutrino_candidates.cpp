@@ -11,6 +11,7 @@
 #include "daq_tps_clustering_libs.h"
 #include "cluster.h"
 #include "position_calculator.h"
+#include "extract_neutrino_candidates_libs.h"
 
 
 LoggerInit([]{
@@ -20,7 +21,7 @@ LoggerInit([]{
 int main(int argc, char* argv[]) {
     CmdLineParser clp;
 
-    clp.getDescription() << "> daq_tps_clustering app."<< std::endl;
+    clp.getDescription() << "> extract_neutrino_candidates app."<< std::endl;
 
     clp.addDummyOption("Main options");
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
@@ -51,24 +52,21 @@ int main(int argc, char* argv[]) {
     std::cout << "Filename: " << filename << std::endl;
     std::string outfolder = j["output_folder"];
     std::cout << "Output folder: " << outfolder << std::endl;
-    int ticks_limit = j["tick_limit"];
-    std::cout << "Tick limit: " << ticks_limit << std::endl;
-    int channel_limit = j["channel_limit"];
-    std::cout << "Channel limit: " << channel_limit << std::endl;
-    int min_tps_to_cluster = j["min_tps_to_cluster"];
-    std::cout << "Min TPs to cluster: " << min_tps_to_cluster << std::endl;
     int plane = j["plane"];
     std::cout << "Plane: " << plane << std::endl;
     int max_tps_per_filename = j["max_tps_per_filename"];
     std::cout << "Max events per filename: " << max_tps_per_filename << std::endl;
     int adc_integral_cut = j["adc_integral_cut"];
     std::cout << "ADC integral cut: " << adc_integral_cut << std::endl;
+    int time_limit = j["time_limit"];
+    std::cout << "Time limit: " << time_limit << std::endl;
     int min_tot_per_tp = j["min_tot_per_tp"];
     std::cout << "Min TOT per TP: " << min_tot_per_tp << std::endl;
     int min_integral_per_tp = j["min_integral_per_tp"];
     std::cout << "Min integral per TP: " << min_integral_per_tp << std::endl;
     int n_skip_tps = j["n_skip_tps"];
     std::cout << "Number of TPs to skip: " << n_skip_tps << std::endl;
+
 
     std::vector<std::string> plane_names = {"U", "V", "X"};
     // start the clock
@@ -87,10 +85,15 @@ int main(int argc, char* argv[]) {
     std::vector<std::vector<double>> tps = file_reader(filenames, plane, max_tps_per_filename, min_tot_per_tp, min_integral_per_tp, n_skip_tps);
     std::cout << "Number of tps: " << tps.size() << std::endl;
     // cluster the tps
-    std::vector<cluster> clusters = cluster_maker(tps, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut);
+    std::vector<cluster> clusters = neutrino_explosion_finder(tps, 0, time_limit, adc_integral_cut);
     std::cout << "Number of clusters: " << clusters.size() << std::endl;
-    // write the clusters to a root file
-    std::string root_filename = outfolder + "/clusters.root";
+    // check if I have at least one cluster
+    if (clusters.size() == 0){
+        std::cout << "No clusters found" << std::endl;
+        return 0;
+    }
+
+    std::string root_filename = outfolder + "/clusters_selected.root";
     // std::string root_filename = outfolder + "/" + plane_names[plane] + "/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
     write_clusters_to_root(clusters, root_filename);
     std::cout << "clusters written to " << root_filename << std::endl;
@@ -99,4 +102,3 @@ int main(int argc, char* argv[]) {
     end = std::clock();
     return 0;
 }
-

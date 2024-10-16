@@ -175,7 +175,8 @@ std::vector<cluster> cluster_maker(std::vector<std::vector<double>>& all_tps, in
                         if (channel_condition_with_pos(tp[3], tp2[3], channel_limit)) {
                         // if (channel_condition_with_pbc(tp[3], tp2[3], channel_limit)) {
                         // if (std::abs(tp[3] - tp2[3]) <= channel_limit) {
-                            if (tp[0]-(tp2[0]+tp2[1]) <=ticks_limit) {
+                            // if (tp[0]-(tp2[0]+tp2[1]) <=ticks_limit) {
+                            if (std::abs(tp[2]-tp2[2]) <=ticks_limit) {
                                 chan_cond = true;
                                 break;
                             }

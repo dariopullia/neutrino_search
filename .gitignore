@@ -4,3 +4,5 @@ json/
 list/
 submodules/
 */__pycache__/
+condor/
+external_libs/

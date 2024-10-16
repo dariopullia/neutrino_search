@@ -11,6 +11,7 @@
 #include "daq_tps_clustering_libs.h"
 #include "cluster.h"
 #include "position_calculator.h"
+#include "extract_neutrino_candidates_libs.h"
 
 
 LoggerInit([]{
@@ -20,7 +21,7 @@ LoggerInit([]{
 int main(int argc, char* argv[]) {
     CmdLineParser clp;
 
-    clp.getDescription() << "> daq_tps_clustering app."<< std::endl;
+    clp.getDescription() << "> extract_neutrino_candidates app."<< std::endl;
 
     clp.addDummyOption("Main options");
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
@@ -69,6 +70,28 @@ int main(int argc, char* argv[]) {
     std::cout << "Min integral per TP: " << min_integral_per_tp << std::endl;
     int n_skip_tps = j["n_skip_tps"];
     std::cout << "Number of TPs to skip: " << n_skip_tps << std::endl;
+    int sub_adc_min = j["sub_adc_min"];
+    std::cout << "Sub ADC min: " << sub_adc_min << std::endl;
+    int sub_adc_max = j["sub_adc_max"];
+    std::cout << "Sub ADC max: " << sub_adc_max << std::endl;
+    int sub_ticks_limit = j["sub_ticks_limit"];
+    std::cout << "Sub ticks limit: " << sub_ticks_limit << std::endl;
+    int sub_channel_limit = j["sub_channel_limit"];
+    std::cout << "Sub channel limit: " << sub_channel_limit << std::endl;
+    int sub_min_tps_to_cluster = j["sub_min_tps_to_cluster"];
+    std::cout << "Sub min TPs to cluster: " << sub_min_tps_to_cluster << std::endl;
+    int sub_adc_integral_cut = j["sub_adc_integral_cut"];
+    std::cout << "Sub ADC integral cut: " << sub_adc_integral_cut << std::endl;
+    int z_min = j["z_min"];
+    std::cout << "Z min: " << z_min << std::endl;
+    int z_max = j["z_max"];
+    std::cout << "Z max: " << z_max << std::endl;
+    int z_min_lenght = j["z_min_lenght"];
+    std::cout << "Z min length: " << z_min_lenght << std::endl;
+    int x_max_length = j["x_max_length"];
+    std::cout << "X max length: " << x_max_length << std::endl;
+
+
 
     std::vector<std::string> plane_names = {"U", "V", "X"};
     // start the clock
@@ -90,9 +113,11 @@ int main(int argc, char* argv[]) {
     std::vector<cluster> clusters = cluster_maker(tps, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut);
     std::cout << "Number of clusters: " << clusters.size() << std::endl;
     // write the clusters to a root file
-    std::string root_filename = outfolder + "/clusters.root";
+    std::vector<cluster> clusters_selected = select_interesting_clusters(clusters, sub_adc_min, sub_adc_max, sub_ticks_limit, sub_channel_limit, sub_min_tps_to_cluster, sub_adc_integral_cut, z_min, z_max, z_min_lenght, x_max_length);
+    std::cout << "Number of selected clusters: " << clusters_selected.size() << std::endl;
+    std::string root_filename = outfolder + "/clusters_selected.root";
     // std::string root_filename = outfolder + "/" + plane_names[plane] + "/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
-    write_clusters_to_root(clusters, root_filename);
+    write_clusters_to_root(clusters_selected, root_filename);
     std::cout << "clusters written to " << root_filename << std::endl;
     // stop the clock
     std::clock_t end;

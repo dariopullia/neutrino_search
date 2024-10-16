@@ -49,12 +49,14 @@ def cluster_maker(all_tps, ticks_limit, channel_limit, min_tps_to_cluster, adc_i
                     max_time = max(max_time, tp2[0] + tp2[1])
 
                 time_cond = (tp[0] - max_time) <= ticks_limit
+                # time_cond = abs(tp[2] - tp2[2]) <= ticks_limit
+            
                 if time_cond:
                     chan_cond = False
                     for tp2 in candidate:
                         if channel_condition_with_pos(tp[3], tp2[3], channel_limit):
-                            if abs(tp[2] - tp2[2]) <= ticks_limit:
-                            # if tp[0] - (tp2[0] + tp2[1]) <= ticks_limit:
+                            # if abs(tp[2] - tp2[2]) <= ticks_limit:
+                            if tp[0] - (tp2[0] + tp2[1]) <= ticks_limit:
                                 chan_cond = True
                                 break
 

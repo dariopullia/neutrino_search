@@ -25,6 +25,7 @@ set( SRC_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cluster.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/position_calculator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/daq_tps_clustering_libs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/extract_neutrino_candidates_libs.cpp
 )
 
 add_library( ${LIB_NAME} SHARED ${SRC_FILES} )
