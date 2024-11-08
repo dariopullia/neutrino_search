@@ -24,6 +24,8 @@ args = parser.parse_args()
 
 input_json_file = args.input_json
 
+job_number = input_json_file.split('_')[-1].replace('.json', '')
+
 filename = input_json_file.split('/')[-1].replace('.json', '')
 
 
@@ -37,6 +39,7 @@ output_folder = input_json['output_folder']
 adc_integral_cut = input_json['adc_integral_cut']
 time_limit = input_json['time_limit']
 beam_status_file = input_json['beam_status_file']
+beam_on = input_json['beam_on']
 
 monitor_matrix = np.loadtxt(beam_status_file, delimiter=",", dtype=str)
 monitor_name = monitor_matrix[:,0]
@@ -56,8 +59,47 @@ if not os.path.exists(output_folder):
 list_of_files = np.loadtxt(input_file, dtype=str)
 
 records_adcs = []
+record_list_to_find_complete = [57538, 73066, 74064, 78869]
+record_list_to_find = [57538, 73066, 74064, 78869]
+passing_cosmics = 0
+not_passing_cosmics = 0
+passing_neutrinos = 0
+not_passing_neutrinos = 0
+
+
 for input_hdf5_file in list_of_files:
-    records_adcs = from_hdf5_to_wf(input_hdf5_file, "PD2HDChannelMap", "HD_TPC", channel_limit_mins=[4160, 9280], channel_limit_maxs=[4640, 9760], monitor_charge=monitor_charge, monitor_time=monitor_time)
+    records_adcs, records_ids = from_hdf5_to_wf(input_hdf5_file, "PD2HDChannelMap", "HD_TPC", channel_limit_mins=[4160, 9280], channel_limit_maxs=[4640, 9760], monitor_charge=monitor_charge, monitor_time=monitor_time)
+    # if the record id is in the list, remove from the list
+    for r in records_ids:
+        if r in record_list_to_find:
+            record_list_to_find.remove(r)
+            print("Record found: ", r)
+    print(records_ids)
     for i in range(len(records_adcs)):
-        print(records_adcs[i].shape)
-        do_plot_wf(records_adcs[i], i, filename=input_hdf5_file.split('/')[-1].replace('.hdf5', ''), output_folder=output_folder)
+
+        adcs = records_adcs[i]
+
+        if pass_all_filters(adcs):
+            passing_cosmics += 1
+            do_clean_plot_wf(adcs, records_ids[i], filename=input_hdf5_file.split('/')[-1].replace('.hdf5', ''), output_folder=output_folder+'/passing/')
+        else:
+            not_passing_cosmics += 1
+            do_plot_wf(adcs, records_ids[i], filename=input_hdf5_file.split('/')[-1].replace('.hdf5', ''), output_folder=output_folder+'/not_passing/')
+
+    # break
+
+print("Records not found: ", record_list_to_find)
+print("Passing neutrinos: ", passing_neutrinos)
+print("Not passing neutrinos: ", not_passing_neutrinos)
+print("Passing cosmics: ", passing_cosmics)
+print("Not passing cosmics: ", not_passing_cosmics)
+
+if not os.path.exists(output_folder+'/summary/passing/'):
+    os.makedirs(output_folder+'/summary/passing/')  
+if not os.path.exists(output_folder+'/summary/not_passing/'):
+    os.makedirs(output_folder+'/summary/not_passing/')
+
+with open(output_folder+'/summary/passing/'+str(job_number)+'.txt', "w") as f:
+    f.write(str(passing_cosmics))
+with open(output_folder+'/summary/not_passing/'+str(job_number)+'.txt', "w") as f:
+    f.write(str(not_passing_cosmics))
