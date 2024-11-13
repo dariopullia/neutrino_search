@@ -49,7 +49,7 @@ def select_channels(wf, channel_limit_mins, channel_limit_maxs):
     return survived_wf
 
 
-def from_hdf5_to_wf(filename, channel_map_name, det, channel_limit_mins=[], channel_limit_maxs=[], monitor_charge=[], monitor_time=[], beam_on=1):
+def from_hdf5_to_wf(filename, channel_map_name, det, channel_limit_mins=[], channel_limit_maxs=[], monitor_charge=[], monitor_time=[], beam_on=1, monitor_threshold=2.1E6, ask_for_close_beam=1):
     print("Processing file: ", filename)
     h5_file = HDF5RawDataFile(filename)
     records = h5_file.get_all_record_ids()
@@ -73,15 +73,15 @@ def from_hdf5_to_wf(filename, channel_map_name, det, channel_limit_mins=[], chan
         monitor_index = np.argmin(np.abs(monitor_time - frag_min_time))
             
         if beam_on:
-            if monitor_charge[monitor_index] < 2.1E6:
+            if monitor_charge[monitor_index] < monitor_threshold:
                 print("Skipping event, beam off. Charge: ", monitor_charge[monitor_index])
                 continue
         else:       
-            if monitor_charge[monitor_index] > 2.1E6:
+            if monitor_charge[monitor_index] > monitor_threshold:
                 print("Skipping event, beam on. Charge: ", monitor_charge[monitor_index])
                 continue
             monitor_interval = monitor_charge[monitor_index-30:monitor_index+30]
-            if np.max(monitor_interval) < 2.1E6:
+            if np.max(monitor_interval) < monitor_threshold and ask_for_close_beam:
                 print("Skipping event, maybe dump. Charge: ", monitor_charge[monitor_index])
                 continue
 

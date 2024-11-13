@@ -40,6 +40,13 @@ adc_integral_cut = input_json['adc_integral_cut']
 time_limit = input_json['time_limit']
 beam_status_file = input_json['beam_status_file']
 beam_on = input_json['beam_on']
+monitor_threshold = input_json['monitor_threshold']
+ask_for_close_beam = input_json['ask_for_close_beam']
+
+if beam_on:
+    output_folder = output_folder + "/beam_on/"
+else:
+    output_folder = output_folder + "/beam_off/"
 
 monitor_matrix = np.loadtxt(beam_status_file, delimiter=",", dtype=str)
 monitor_name = monitor_matrix[:,0]
@@ -68,7 +75,7 @@ not_passing_neutrinos = 0
 
 
 for input_hdf5_file in list_of_files:
-    records_adcs, records_ids = from_hdf5_to_wf(input_hdf5_file, "PD2HDChannelMap", "HD_TPC", channel_limit_mins=[4160, 9280], channel_limit_maxs=[4640, 9760], monitor_charge=monitor_charge, monitor_time=monitor_time)
+    records_adcs, records_ids = from_hdf5_to_wf(input_hdf5_file, "PD2HDChannelMap", "HD_TPC", channel_limit_mins=[4160, 9280], channel_limit_maxs=[4640, 9760], monitor_charge=monitor_charge, monitor_time=monitor_time, monitor_threshold=monitor_threshold, ask_for_close_beam=ask_for_close_beam)
     # if the record id is in the list, remove from the list
     for r in records_ids:
         if r in record_list_to_find:
