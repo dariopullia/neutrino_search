@@ -49,7 +49,7 @@ def select_channels(wf, channel_limit_mins, channel_limit_maxs):
     return survived_wf
 
 
-def from_hdf5_to_wf(filename, channel_map_name, det, channel_limit_mins=[], channel_limit_maxs=[], monitor_charge=[], monitor_time=[], beam_on=1, monitor_threshold=2.1E6, ask_for_close_beam=1):
+def from_hdf5_to_wf(filename, channel_map_name, det, channel_limit_mins=[], channel_limit_maxs=[], time_interval=[], monitor_charge=[], monitor_time=[], beam_on=1, monitor_threshold=2.1E6, ask_for_close_beam=1):
     print("Processing file: ", filename)
     h5_file = HDF5RawDataFile(filename)
     records = h5_file.get_all_record_ids()
@@ -72,18 +72,20 @@ def from_hdf5_to_wf(filename, channel_map_name, det, channel_limit_mins=[], chan
         frag_min_time = frag_first.get_window_begin()
         monitor_index = np.argmin(np.abs(monitor_time - frag_min_time))
             
-        if beam_on:
+        if beam_on==1:
             if monitor_charge[monitor_index] < monitor_threshold:
                 print("Skipping event, beam off. Charge: ", monitor_charge[monitor_index])
                 continue
-        else:       
+        elif beam_on==0:
             if monitor_charge[monitor_index] > monitor_threshold:
                 print("Skipping event, beam on. Charge: ", monitor_charge[monitor_index])
                 continue
             monitor_interval = monitor_charge[monitor_index-30:monitor_index+30]
-            if np.max(monitor_interval) < monitor_threshold and ask_for_close_beam:
-                print("Skipping event, maybe dump. Charge: ", monitor_charge[monitor_index])
-                continue
+            if ask_for_close_beam==1:
+                if np.max(monitor_interval) < monitor_threshold:
+                    print("Skipping event, maybe dump. Charge: ", monitor_charge[monitor_index])
+                    continue
+            print("Passing, beam off. Charge: ", monitor_charge[monitor_index])
 
         for gid in wib_geo_ids:
             frag = h5_file.get_frag(r,gid)
@@ -112,7 +114,12 @@ def from_hdf5_to_wf(filename, channel_map_name, det, channel_limit_mins=[], chan
         total_adcs = total_adcs[total_adcs[:,0].argsort()]
         medians = np.median(total_adcs[:, 1:], axis=1)
         total_adcs[:, 1:] = total_adcs[:, 1:] - medians[:, None]
-        total_adcs = total_adcs[:,:3000]
+        # total_adcs = total_adcs[:,:3000]
+        if len(time_interval) == 2:
+            channels = total_adcs[:,0]
+            total_adcs = total_adcs[:,time_interval[0]:time_interval[1]]
+            total_adcs = np.insert(total_adcs, 0, channels, axis=1)
+        
         print(total_adcs.shape)
         n_records_processed += 1
         if contains_interesting_section(total_adcs, 800, 10E6):

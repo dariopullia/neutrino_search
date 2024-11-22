@@ -42,6 +42,17 @@ beam_status_file = input_json['beam_status_file']
 beam_on = input_json['beam_on']
 monitor_threshold = input_json['monitor_threshold']
 ask_for_close_beam = input_json['ask_for_close_beam']
+time_interval= input_json["time_interval"]
+print("Input file: ", input_file)
+print("Output folder: ", output_folder)
+print("ADC integral cut: ", adc_integral_cut)
+print("Time limit: ", time_limit)
+print("Beam status file: ", beam_status_file)
+print("Beam on: ", beam_on)
+print("Monitor threshold: ", monitor_threshold)
+print("Ask for close beam: ", ask_for_close_beam)
+print("Time interval: ", time_interval)
+
 
 if beam_on:
     output_folder = output_folder + "/beam_on/"
@@ -66,8 +77,6 @@ if not os.path.exists(output_folder):
 list_of_files = np.loadtxt(input_file, dtype=str)
 
 records_adcs = []
-record_list_to_find_complete = [57538, 73066, 74064, 78869]
-record_list_to_find = [57538, 73066, 74064, 78869]
 passing_cosmics = 0
 not_passing_cosmics = 0
 passing_neutrinos = 0
@@ -75,17 +84,22 @@ not_passing_neutrinos = 0
 
 
 for input_hdf5_file in list_of_files:
-    records_adcs, records_ids = from_hdf5_to_wf(input_hdf5_file, "PD2HDChannelMap", "HD_TPC", channel_limit_mins=[4160, 9280], channel_limit_maxs=[4640, 9760], monitor_charge=monitor_charge, monitor_time=monitor_time, monitor_threshold=monitor_threshold, ask_for_close_beam=ask_for_close_beam)
+    records_adcs, records_ids = from_hdf5_to_wf(
+        input_hdf5_file, 
+        "PD2HDChannelMap", 
+        "HD_TPC", 
+        channel_limit_mins=[4160, 9280], 
+        channel_limit_maxs=[4640, 9760], 
+        time_interval=time_interval,
+        monitor_charge=monitor_charge, 
+        monitor_time=monitor_time, 
+        beam_on=beam_on, 
+        monitor_threshold=monitor_threshold, 
+        ask_for_close_beam=ask_for_close_beam
+    )
     # if the record id is in the list, remove from the list
-    for r in records_ids:
-        if r in record_list_to_find:
-            record_list_to_find.remove(r)
-            print("Record found: ", r)
-    print(records_ids)
     for i in range(len(records_adcs)):
-
         adcs = records_adcs[i]
-
         if pass_all_filters(adcs):
             passing_cosmics += 1
             do_clean_plot_wf(adcs, records_ids[i], filename=input_hdf5_file.split('/')[-1].replace('.hdf5', ''), output_folder=output_folder+'/passing/')
@@ -95,7 +109,6 @@ for input_hdf5_file in list_of_files:
 
     # break
 
-print("Records not found: ", record_list_to_find)
 print("Passing neutrinos: ", passing_neutrinos)
 print("Not passing neutrinos: ", not_passing_neutrinos)
 print("Passing cosmics: ", passing_cosmics)
