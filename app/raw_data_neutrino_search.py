@@ -54,10 +54,12 @@ print("Ask for close beam: ", ask_for_close_beam)
 print("Time interval: ", time_interval)
 
 
-if beam_on:
+if beam_on==1:
     output_folder = output_folder + "/beam_on/"
-else:
+elif beam_on==0:
     output_folder = output_folder + "/beam_off/"
+elif beam_on==2:
+    output_folder = output_folder + "/both/"
 
 monitor_matrix = np.loadtxt(beam_status_file, delimiter=",", dtype=str)
 monitor_name = monitor_matrix[:,0]
@@ -81,6 +83,8 @@ passing_cosmics = 0
 not_passing_cosmics = 0
 passing_neutrinos = 0
 not_passing_neutrinos = 0
+filter_outputs = []
+
 
 
 for input_hdf5_file in list_of_files:
@@ -100,6 +104,8 @@ for input_hdf5_file in list_of_files:
     # if the record id is in the list, remove from the list
     for i in range(len(records_adcs)):
         adcs = records_adcs[i]
+        this_out = get_individual_filter_results(adcs)
+        filter_outputs.append(this_out)
         if pass_all_filters(adcs):
             passing_cosmics += 1
             do_clean_plot_wf(adcs, records_ids[i], filename=input_hdf5_file.split('/')[-1].replace('.hdf5', ''), output_folder=output_folder+'/passing/')
@@ -123,3 +129,7 @@ with open(output_folder+'/summary/passing/'+str(job_number)+'.txt', "w") as f:
     f.write(str(passing_cosmics))
 with open(output_folder+'/summary/not_passing/'+str(job_number)+'.txt', "w") as f:
     f.write(str(not_passing_cosmics))
+
+filter_outputs = np.array(filter_outputs)
+# save to text file
+np.savetxt(output_folder+'/summary/'+str(job_number)+'.txt', filter_outputs, fmt='%s', delimiter=',')

@@ -86,6 +86,8 @@ def from_hdf5_to_wf(filename, channel_map_name, det, channel_limit_mins=[], chan
                     print("Skipping event, maybe dump. Charge: ", monitor_charge[monitor_index])
                     continue
             print("Passing, beam off. Charge: ", monitor_charge[monitor_index])
+        elif beam_on==2:
+            print("Passing, want both. Charge: ", monitor_charge[monitor_index])
 
         for gid in wib_geo_ids:
             frag = h5_file.get_frag(r,gid)
@@ -373,6 +375,18 @@ def pass_all_filters(adc):
 
     return True
 
+def get_individual_filter_results(adc):
+    '''
+    Get the results of the individual filters
+    '''
+    results = []
+    results.append(fake_filters(adc))
+    results.append(check_region_position(adc))
+    results.append(check_gaussian_width_y_coord(adc))
+    results.append(check_if_there_is_a_muon_tail(adc))
+    results.append(muon_tail_angle_filter(adc))
+
+    return results
 
 
 
