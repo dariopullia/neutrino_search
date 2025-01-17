@@ -83,12 +83,14 @@ passing_cosmics = 0
 not_passing_cosmics = 0
 passing_neutrinos = 0
 not_passing_neutrinos = 0
+tot_n_trigger = 0
+tot_n_trigger_beam = 0
 filter_outputs = []
 
 
 
 for input_hdf5_file in list_of_files:
-    records_adcs, records_ids = from_hdf5_to_wf(
+    records_adcs, records_ids, n_trigger, n_trigger_beam = from_hdf5_to_wf(
         input_hdf5_file, 
         "PD2HDChannelMap", 
         "HD_TPC", 
@@ -101,6 +103,8 @@ for input_hdf5_file in list_of_files:
         monitor_threshold=monitor_threshold, 
         ask_for_close_beam=ask_for_close_beam
     )
+    tot_n_trigger += n_trigger
+    tot_n_trigger_beam += n_trigger_beam
     # if the record id is in the list, remove from the list
     for i in range(len(records_adcs)):
         adcs = records_adcs[i]
@@ -124,12 +128,19 @@ if not os.path.exists(output_folder+'/summary/passing/'):
     os.makedirs(output_folder+'/summary/passing/')  
 if not os.path.exists(output_folder+'/summary/not_passing/'):
     os.makedirs(output_folder+'/summary/not_passing/')
+if not os.path.exists(output_folder+'/summary/trigger_beam/'):
+    os.makedirs(output_folder+'/summary/trigger_beam/')
 
 with open(output_folder+'/summary/passing/'+str(job_number)+'.txt', "w") as f:
     f.write(str(passing_cosmics))
 with open(output_folder+'/summary/not_passing/'+str(job_number)+'.txt', "w") as f:
     f.write(str(not_passing_cosmics))
+with open(output_folder+'/summary/trigger_beam/'+str(job_number)+'.txt', "w") as f:
+    f.write(str(tot_n_trigger) + " " + str(tot_n_trigger_beam))
 
 filter_outputs = np.array(filter_outputs)
 # save to text file
 np.savetxt(output_folder+'/summary/'+str(job_number)+'.txt', filter_outputs, fmt='%s', delimiter=',')
+
+
+

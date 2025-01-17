@@ -57,7 +57,10 @@ def from_hdf5_to_wf(filename, channel_map_name, det, channel_limit_mins=[], chan
     n_records_processed = 0
     records_adcs = []
     records_ids = []
+    n_trigger = 0
+    n_trigger_beam = 0
     for r in records:
+        n_trigger += 1
     # for r in records[:6]:
         # if r[0] != 57570:
         # #     continue
@@ -71,6 +74,9 @@ def from_hdf5_to_wf(filename, channel_map_name, det, channel_limit_mins=[], chan
         # find the arguments of the monitor matrix that are closest to the start of the fragment
         frag_min_time = frag_first.get_window_begin()
         monitor_index = np.argmin(np.abs(monitor_time - frag_min_time))
+
+        if monitor_charge[monitor_index] > monitor_threshold:   
+            n_trigger_beam += 1
             
         if beam_on==1:
             if monitor_charge[monitor_index] < monitor_threshold:
@@ -129,7 +135,7 @@ def from_hdf5_to_wf(filename, channel_map_name, det, channel_limit_mins=[], chan
             records_ids.append(r[0])
             print("Interesting section found")
 
-    return records_adcs, records_ids
+    return records_adcs, records_ids, n_trigger, n_trigger_beam
 
 
 def contains_interesting_section(adcs, time_limit, adc_integral_cut):
@@ -387,8 +393,6 @@ def get_individual_filter_results(adc):
     results.append(muon_tail_angle_filter(adc))
 
     return results
-
-
 
 def do_plot_wf(adc, img_counter, filename, output_folder):
     if is_groundshake(adc):
